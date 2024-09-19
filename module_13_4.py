@@ -6,13 +6,14 @@ import logging
 import asyncio
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token="7363453523525324")
+bot = Bot(token="736002424141l4")
 dp = Dispatcher()
 
 class UserState(StatesGroup):
     age = State()
     growth = State()
     weight = State()
+    gender = State()
 
 
 
@@ -33,7 +34,7 @@ async def set_age(message: types.Message, state: FSMContext):
 @dp.message(UserState.age)
 async def set_growth(message: types.Message,  state: FSMContext):
     await state.update_data(age=message.text)
-    await message.answer('Введите свой рост:')
+    await message.answer('Введите свой рост(см):')
     await state.set_state(UserState.growth)
 
 @dp.message(UserState.growth)
@@ -45,12 +46,25 @@ async def set_weight(message: types.Message,  state: FSMContext):
 @dp.message(UserState.weight)
 async def send_calories(message: types.Message,  state: FSMContext):
     await state.update_data(weight=message.text)
+    await message.answer('Введите свой пол (мужчина/женщина):')
+    await state.set_state(UserState.gender)
+
+@dp.message(UserState.gender)
+async def set_gender(message: types.Message, state: FSMContext):
+    await state.update_data(gender=message.text)
     data = await state.get_data()
     age_ = int(data['age'])
     growth_ = int(data['growth'])
     weight_ = int(data['weight'])
 
-    await message.answer(f"Ваша норма калорий:{ (weight_*10) + (6.25 * growth_) -  (5* age_) + 5 }")
+    if data["gender"] == 'женщина':
+        calories = (weight_ * 10) + (6.25 * growth_) - (5 * age_) - 161
+
+    elif data["gender"] == 'мужчина':
+        calories =(weight_*10) + (6.25 * growth_) - (5* age_) + 5
+
+    await message.answer(f"Ваша норма калорий:{calories}")
+    await state.finish()
 
 
 async def main():
